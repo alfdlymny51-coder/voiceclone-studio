@@ -17,7 +17,7 @@ class JobRunner:
         self._db = db
         self._storage = storage
         self._audit = audit
-        self._engine = get_engine(engine_name)
+        self._engine = get_engine(engine_name, cache_dir=data_dir / "models")
         self._models_dir = data_dir / "models"
         self._models_dir.mkdir(parents=True, exist_ok=True)
 

@@ -99,7 +99,62 @@ class XTTSv2Engine:
         return out.getvalue()
 
 
-def get_engine(name: str):
+class PiperEngine:
+    """محرك كلام عربي حقيقي خفيف (Piper TTS) — يعمل على CPU بدون GPU.
+
+    ملاحظة أمانة: هذا المحرك ينطق النص بصوت عربي عام (ar_JO-kareem)،
+    وليس بصوت صاحب العينات. الاستنساخ الحقيقي للنبرة يتطلب XTTSv2Engine على GPU.
+    """
+
+    name = "piper"
+    _BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/ar/ar_JO/kareem/medium/"
+    _MODEL = "ar_JO-kareem-medium.onnx"
+
+    def __init__(self, cache_dir: Path | None = None) -> None:
+        self._dir = (cache_dir or Path("./data/models")) / "piper"
+        self._voice = None
+
+    def _load(self):
+        if self._voice is None:
+            import urllib.request
+            from piper import PiperVoice
+            self._dir.mkdir(parents=True, exist_ok=True)
+            model = self._dir / self._MODEL
+            cfg = self._dir / (self._MODEL + ".json")
+            for p in (model, cfg):
+                if not p.exists():
+                    urllib.request.urlretrieve(self._BASE + p.name, p)
+            self._voice = PiperVoice.load(str(model), config_path=str(cfg))
+        return self._voice
+
+    def train(self, sample_bytes_list: list[bytes], workdir: Path) -> dict:
+        workdir.mkdir(parents=True, exist_ok=True)
+        import json
+        info = {"engine": self.name, "note": "صوت عربي عام — النبرة غير مستنسخة",
+                "samples_received": len(sample_bytes_list)}
+        (workdir / "speaker_model.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+        return info
+
+    def synthesize(self, text: str, model_dir: Path, speed: float = 1.0, quality: str = "high") -> bytes:
+        voice = self._load()
+        buf = BytesIO()
+        kwargs = {}
+        try:
+            from piper import SynthesisConfig
+            kwargs["syn_config"] = SynthesisConfig(length_scale=1.0 / max(0.5, min(2.0, speed)))
+        except Exception:  # noqa: BLE001 — إصدار piper قد لا يدعم SynthesisConfig
+            pass
+        with wave.open(buf, "wb") as w:
+            if hasattr(voice, "synthesize_wav"):
+                voice.synthesize_wav(text, w, **kwargs)
+            else:
+                voice.synthesize(text, w)
+        return buf.getvalue()
+
+
+def get_engine(name: str, cache_dir: Path | None = None):
     if name == "xtts":
         return XTTSv2Engine()
+    if name == "piper":
+        return PiperEngine(cache_dir)
     return MockEngine()
