@@ -2,5 +2,6 @@
 -r requirements.txt
 coqui-tts>=0.25
 torch
+torchcodec
 soundfile>=0.12
 numpy>=1.26
