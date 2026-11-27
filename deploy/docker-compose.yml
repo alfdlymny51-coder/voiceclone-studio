@@ -1,0 +1,43 @@
+services:
+  # الخدمة الموحّدة: API + الواجهة الأمامية (وضع التطوير/العرض)
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      # ⚠️ في الإنتاج: مرّر مفتاحاً حقيقياً عبر سرّ، لا تحفظه هنا
+      VCS_STORAGE_KEY: ${VCS_STORAGE_KEY:-}
+      VCS_TTS_ENGINE: ${VCS_TTS_ENGINE:-mock}
+      VCS_CORS_ORIGINS: ${VCS_CORS_ORIGINS:-http://localhost:8000}
+      VCS_ENV: ${VCS_ENV:-prod}
+    volumes:
+      - vcs_data:/data
+    restart: unless-stopped
+
+  # خدمة GPU الاختيارية (محرك XTTS الحقيقي) — فعّلها عبر:
+  #   docker compose --profile gpu up gpu-worker
+  gpu-worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.gpu
+    profiles: ["gpu"]
+    ports:
+      - "8001:8000"
+    environment:
+      VCS_STORAGE_KEY: ${VCS_STORAGE_KEY:-}
+      VCS_TTS_ENGINE: xtts
+    volumes:
+      - vcs_data:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  vcs_data:

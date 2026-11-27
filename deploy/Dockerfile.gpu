@@ -1,0 +1,28 @@
+# صورة GPU لمحرك XTTS v2 (استنساخ صوتي حقيقي zero-shot)
+# البناء: docker build -f deploy/Dockerfile.gpu -t vcs-gpu .
+# التشغيل يتطلب: NVIDIA Container Toolkit
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+ENV PYTHONUNBUFFERED=1 \
+    VCS_DATA_DIR=/data \
+    VCS_TTS_ENGINE=xtts \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 python3-pip ffmpeg libsndfile1 git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /srv
+COPY backend/requirements-xtts.txt ./backend/requirements-xtts.txt
+RUN pip3 install --no-cache-dir -r backend/requirements-xtts.txt
+
+COPY backend ./backend
+COPY frontend ./frontend
+WORKDIR /srv/backend
+
+RUN useradd -m vcs && mkdir -p /data && chown -R vcs /data /srv
+USER vcs
+VOLUME ["/data"]
+
+EXPOSE 8000
+CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

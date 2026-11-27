@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceClone Studio — استوديو استنساخ الصوت بموافقة موثّقة</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">🎙️</span>
+    <div>
+      <h1>VoiceClone Studio</h1>
+      <p>استنساخ صوتي مسؤول — لا تدريب دون موافقة موثّقة</p>
+    </div>
+  </div>
+  <div class="api-config">
+    <input id="apiBase" type="text" placeholder="عنوان الخادم (افتراضي: نفس المصدر)" title="API base URL">
+    <span id="health" class="badge">…</span>
+  </div>
+</header>
+
+<main>
+  <!-- قائمة المشاريع -->
+  <section class="panel" id="projectsPanel">
+    <div class="panel-head">
+      <h2>المشاريع</h2>
+      <form id="newProjectForm" class="inline-form">
+        <input id="projName" required placeholder="اسم المشروع">
+        <input id="speakerName" required placeholder="اسم صاحب الصوت">
+        <button type="submit" class="btn primary">مشروع جديد</button>
+      </form>
+    </div>
+    <div id="projectList" class="cards"></div>
+  </section>
+
+  <!-- تفاصيل المشروع -->
+  <section class="panel hidden" id="detailPanel">
+    <button class="btn ghost" id="backBtn">→ عودة للمشاريع</button>
+    <h2 id="detailTitle"></h2>
+    <div id="statusLine" class="status-line"></div>
+
+    <!-- خطوة 1: الموافقة -->
+    <div class="step" id="stepConsent">
+      <h3><span class="step-num">١</span> موافقة صاحب الصوت <span class="req">إلزامي</span></h3>
+      <blockquote id="consentStatement" class="consent-text"></blockquote>
+      <p class="hint">عبارة التحقق الصوتي: <strong id="liveness"></strong></p>
+      <label class="check"><input type="checkbox" id="c1"> أقرّ بأنني صاحب الصوت أو مخوَّل خطّياً منه</label>
+      <label class="check"><input type="checkbox" id="c2"> أوافق على نص الإقرار أعلاه</label>
+      <label class="check"><input type="checkbox" id="c3"> أتحمّل المسؤولية القانونية الكاملة عن الاستخدام</label>
+      <button class="btn primary" id="consentBtn" disabled>توثيق الموافقة</button>
+      <div id="consentDone" class="badge ok hidden">✔ الموافقة موثّقة</div>
+    </div>
+
+    <!-- خطوة 2: العينات -->
+    <div class="step disabled" id="stepSamples">
+      <h3><span class="step-num">٢</span> العيّنات الصوتية</h3>
+      <p class="hint">ارفع من ٣ إلى ١٠ عيّنات WAV/MP3 نظيفة (٥–٣٠ ثانية لكل عيّنة، بلا موسيقى خلفية).</p>
+      <div class="upload-row">
+        <input type="file" id="fileInput" accept="audio/*">
+        <button class="btn" id="uploadBtn">رفع العيّنة</button>
+        <button class="btn" id="recordBtn">● تسجيل من الميكروفون</button>
+      </div>
+      <ul id="sampleList" class="sample-list"></ul>
+    </div>
+
+    <!-- خطوة 3: التدريب -->
+    <div class="step disabled" id="stepTrain">
+      <h3><span class="step-num">٣</span> تدريب النموذج</h3>
+      <p class="hint">المحرك الحالي: <code id="engineName">…</code> — في وضع الإنتاج (XTTS v2) يحتاج GPU ≥ 8GB.</p>
+      <button class="btn primary" id="trainBtn">بدء التدريب</button>
+      <div id="trainStatus" class="job-status"></div>
+    </div>
+
+    <!-- خطوة 4: التوليد -->
+    <div class="step disabled" id="stepSynth">
+      <h3><span class="step-num">٤</span> توليد الكلام</h3>
+      <textarea id="synthText" rows="3" maxlength="2000" placeholder="اكتب النص المراد نطقه بصوت المتحدث…"></textarea>
+      <div class="controls">
+        <label>السرعة <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1"><span id="speedVal">1.0×</span></label>
+        <label>الجودة
+          <select id="quality">
+            <option value="draft">مسودة (سريع)</option>
+            <option value="standard">قياسية</option>
+            <option value="high" selected>عالية</option>
+          </select>
+        </label>
+        <button class="btn primary" id="synthBtn">توليد الصوت</button>
+      </div>
+      <div id="synthStatus" class="job-status"></div>
+      <div id="outputList" class="outputs"></div>
+    </div>
+  </section>
+
+  <section class="panel ethics">
+    <h2>الالتزام الأخلاقي</h2>
+    <ul>
+      <li>يُحظر استنساخ أي صوت دون موافقة صريحة موثّقة من صاحبه.</li>
+      <li>جميع العيّنات والمخرجات مشفّرة أثناء التخزين، وكل عملية مسجّلة في سجل تدقيق غير قابل للتعديل.</li>
+      <li>الاستخدام المسيء (انتحال، احتيال، تشهير) يؤدي للحظر الفوري والإبلاغ.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>VoiceClone Studio — مرخّص MIT · الأصوات المولّدة يجب أن تحمل إفصاحاً بأنها اصطناعية</footer>
+<script src="js/app.js"></script>
+</body>
+</html>

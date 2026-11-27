@@ -1,0 +1,24 @@
+name: Deploy backend (self-hosted GPU runner)
+
+# ينشر الخادم على runner ذاتي الاستضافة مزوّد بـ GPU (لتشغيل XTTS الحقيقي).
+# سجّل الـ runner من: Settings > Actions > Runners > New self-hosted runner
+on:
+  workflow_dispatch:
+    inputs:
+      engine:
+        description: "tts engine (mock|xtts)"
+        default: "xtts"
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull latest image
+        run: docker pull ghcr.io/${{ github.repository }}:main
+      - name: Restart service
+        env:
+          VCS_STORAGE_KEY: ${{ secrets.VCS_STORAGE_KEY }}
+        run: |
+          cd deploy
+          VCS_TTS_ENGINE=${{ inputs.engine }} docker compose --profile gpu up -d gpu-worker

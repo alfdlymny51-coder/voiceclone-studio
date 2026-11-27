@@ -1,0 +1,23 @@
+# صورة الخادم الخلفي (CPU — محرك mock للتطوير)
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    VCS_DATA_DIR=/data \
+    VCS_TTS_ENGINE=mock
+
+WORKDIR /srv
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+COPY backend ./backend
+COPY frontend ./frontend
+WORKDIR /srv/backend
+
+RUN useradd -m vcs && mkdir -p /data && chown -R vcs /data /srv
+USER vcs
+VOLUME ["/data"]
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health')" || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
