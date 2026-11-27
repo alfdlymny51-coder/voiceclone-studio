@@ -1,6 +1,6 @@
-# محرك الإنتاج XTTS v2 — ثبّت هذه الحزم عند VCS_TTS_ENGINE=xtts (يتطلب GPU >= 8GB)
+# محرك الإنتاج XTTS v2 — ثبّت هذه الحزم عند VCS_TTS_ENGINE=xtts (يتطلب GPU >= 8GB أو CPU بطيء)
 -r requirements.txt
-TTS>=0.22
-torch>=2.3
+coqui-tts>=0.25
+torch
 soundfile>=0.12
 numpy>=1.26

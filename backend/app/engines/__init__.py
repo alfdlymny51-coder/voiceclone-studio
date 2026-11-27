@@ -61,7 +61,8 @@ class MockEngine:
 class XTTSv2Engine:
     """محرك الإنتاج — Coqui XTTS v2 (zero-shot voice cloning, 17 لغة منها العربية).
 
-    يتطلب: pip install TTS  + GPU >= 8GB VRAM (أو CPU بطيء).
+    يتطلب: pip install coqui-tts  + GPU >= 8GB VRAM (أو CPU بطيء: دقائق لكل جملة).
+    الاستنساخ zero-shot: نبرة الصوت تُؤخذ مباشرة من العينات المرجعية المرفوعة.
     """
 
     name = "xtts"
@@ -71,28 +72,31 @@ class XTTSv2Engine:
 
     def _load(self):
         if self._tts is None:
-            import torch  # noqa: F401
+            import os
+            os.environ.setdefault("COQUI_TOS_AGREED", "1")  # قبول ترخيص CPML غير تفاعلياً
             from TTS.api import TTS
-            self._tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+            self._tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
         return self._tts
 
     def train(self, sample_bytes_list: list[bytes], workdir: Path) -> dict:
         # XTTS zero-shot: لا تدريب فعلي — نحفظ العينات المرجعية كـ speaker WAVs.
         # للـ fine-tuning الحقيقي راجع models/scripts/finetune_xtts.py
+        import json
         workdir.mkdir(parents=True, exist_ok=True)
         refs = []
         for i, b in enumerate(sample_bytes_list):
             p = workdir / f"ref_{i}.wav"
             p.write_bytes(b)
             refs.append(str(p))
-        return {"references": refs}
+        (workdir / "refs.json").write_text(json.dumps(refs), encoding="utf-8")
+        return {"references": refs, "engine": self.name}
 
     def synthesize(self, text: str, model_dir: Path, speed: float = 1.0, quality: str = "high") -> bytes:
         import json
         refs = json.loads((model_dir / "refs.json").read_text(encoding="utf-8"))
         tts = self._load()
         out = BytesIO()
-        wav = tts.tts(text=text, speaker_wav=refs, language="ar", speed=speed)
+        wav = tts.tts(text=text, speaker_wav=refs[:3], language="ar", speed=speed)
         import numpy as np
         import soundfile as sf  # type: ignore
         sf.write(out, np.array(wav), 24000, format="WAV")

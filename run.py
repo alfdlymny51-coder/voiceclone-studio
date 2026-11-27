@@ -15,9 +15,9 @@ os.chdir(BACKEND)
 
 import uvicorn  # noqa: E402
 
-# بيئة الاستضافة السحابية: المحرك الافتراضي piper (كلام عربي حقيقي على CPU).
-# للتجاوز: VCS_TTS_ENGINE=mock|xtts python run.py
-os.environ.setdefault("VCS_TTS_ENGINE", "piper")
+# بيئة الاستضافة السحابية: المحرك الافتراضي xtts (استنساخ حقيقي للنبرة، بطيء على CPU).
+# للتجاوز: VCS_TTS_ENGINE=mock|piper python run.py
+os.environ.setdefault("VCS_TTS_ENGINE", "xtts")
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0",
