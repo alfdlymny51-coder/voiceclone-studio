@@ -31,7 +31,8 @@ class Settings(BaseSettings):
     abuse_alert_threshold: int = 5  # محاولات مرفوضة قبل الإنذار
 
     # CORS — أصل الواجهة على GitHub Pages أو غيره
-    cors_origins: str = "http://localhost:8000,http://127.0.0.1:8000"
+    cors_origins: str = ("http://localhost:8000,http://127.0.0.1:8000,"
+                         "https://alfdlymny51-coder.github.io")
 
     @property
     def cors_origin_list(self) -> list[str]:
